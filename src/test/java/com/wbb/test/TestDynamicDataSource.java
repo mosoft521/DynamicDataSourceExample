@@ -43,8 +43,9 @@ public class TestDynamicDataSource {
      * 注解切换数据源
      */
     @Test
-    @DynamicRoutingDataSource("dataSource2")
+    //Test类上的注解没啥用
+//    @DynamicRoutingDataSource("dataSource2")
     public void test2() {
-        costService.insert2(new Cost(1000));
+        costService.insert2(new Cost(1234));
     }
 }

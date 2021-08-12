@@ -25,7 +25,7 @@ public class HandlerDataSourceAop {
 	}
 
 	@Before(value = "pointcut()")
-	public void beforeOpt(JoinPoint joinPoint) {
+	public void beforeOpt(JoinPoint joinPoint) throws NoSuchMethodException {
 		/**
 		 * 先查找方法上的注解，没有的话再去查找类上的注解
 		 * ---------------------------------------------------------------------
@@ -41,39 +41,41 @@ public class HandlerDataSourceAop {
 		 * 本文使用是jdk动态代理， 这里使用反射的方式获取方法
 		 */
 		// 反射获取Method 方法一
-		Object target = joinPoint.getTarget();
-		Class<?> clazz = target.getClass();
-		Method[] methods = clazz.getMethods();
-		DynamicRoutingDataSource annotation = null;
-		for (Method method : methods) {
-			if (joinPoint.getSignature().getName().equals(method.getName())) {
-				annotation = method.getAnnotation(DynamicRoutingDataSource.class);
-				if (annotation == null) {
-					annotation = joinPoint.getTarget().getClass().getAnnotation(DynamicRoutingDataSource.class);
-					if (annotation == null) {
-						return;
-					}
-				}
+//		Object target = joinPoint.getTarget();
+//		Class<?> clazz = target.getClass();
+//		Method[] methods = clazz.getMethods();
+//		DynamicRoutingDataSource annotation = null;
+//		for (Method method : methods) {
+//			if (joinPoint.getSignature().getName().equals(method.getName())) {
+//				annotation = method.getAnnotation(DynamicRoutingDataSource.class);
+//				if (annotation == null) {
+//					annotation = joinPoint.getTarget().getClass().getAnnotation(DynamicRoutingDataSource.class);
+//					if (annotation == null) {
+//						return;
+//					}
+//				}
+//			}
+//		}
+
+		// 反射获取Method 方法二
+		Object[] args = joinPoint.getArgs();
+		Class<?>[] argTypes = new Class[joinPoint.getArgs().length];
+		for (int i = 0; i < args.length; i++) {
+			argTypes[i] = args[i].getClass();
+		}
+		Method method =
+				joinPoint.getTarget().getClass().getMethod(joinPoint.getSignature().getName(),
+						argTypes);
+		DynamicRoutingDataSource annotation =
+				method.getAnnotation(DynamicRoutingDataSource.class);
+		if (annotation == null) {
+			annotation =
+					joinPoint.getTarget().getClass().getAnnotation(DynamicRoutingDataSource.class);
+			if (annotation == null) {
+				return;
 			}
 		}
-		// 反射获取Method 方法二
-		// Object[] args = joinPoint.getArgs();
-		// Class<?>[] argTypes = new Class[joinPoint.getArgs().length];
-		// for (int i = 0; i < args.length; i++) {
-		// argTypes[i] = args[i].getClass();
-		// }
-		// Method method =
-		// joinPoint.getTarget().getClass().getMethod(joinPoint.getSignature().getName(),
-		// argTypes);
-		// DynamicRoutingDataSource annotation =
-		// method.getAnnotation(DynamicRoutingDataSource.class);
-		// if (annotation == null) {
-		// annotation =
-		// joinPoint.getTarget().getClass().getAnnotation(DynamicRoutingDataSource.class);
-		// if (annotation == null) {
-		// return;
-		// }
-		// }
+		//TODO:这里改为从默认数据库查询，就OK了。
 		String dataSourceName = annotation.value();
 		MultiDataSource.setDataSourceKey(dataSourceName);
 		System.out.println("切到" + dataSourceName + "数据库");
